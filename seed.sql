@@ -69,6 +69,11 @@ VALUES
 
 
 
--- view all employees 
 
-SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id
+--- view all with employee
+SELECT employee.first_name, employee.last_name, role.title, role.salary, department.name, 
+CONCAT(e.first_name, ' ' ,e.last_name) AS Manager 
+FROM employee 
+INNER JOIN role on role.id = employee.role_id 
+INNER JOIN department on department.id = role.department_id 
+left join employee e on employee.manager_id = e.id;
