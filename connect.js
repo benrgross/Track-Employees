@@ -121,7 +121,15 @@ function addEmployee() {
   console.log("\n getting info ... \n");
   connection.query(displayAllEmp, async (err, res) => {
     if (err) throw err;
-    let roleChoices = res.map((res) => res.Title);
+    let roleChoices = res
+      .map((res) => res.Title)
+      .reduce(function (a, b) {
+        if (a.indexOf(b) < 0) a.push(b);
+        return a;
+      }, []);
+    let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
+    managerChoices.push("None");
+    console.log(managerChoices);
     inquirer
       .prompt([
         {
@@ -145,22 +153,35 @@ function addEmployee() {
           name: "role",
           choices: roleChoices,
         },
+        {
+          type: "list",
+          message: "Who is the Employees Manager?",
+          name: "manager",
+          choices: managerChoices,
+        },
       ])
       .then(function (data) {
-        let firstName = data.firstName;
-        let lastName = data.lastName;
         let roleID;
         res.forEach((row) => {
           if (row.Title === data.role) roleID = row.id;
           return roleID;
         });
+
+        let managerId;
+        res.forEach((row) => {
+          if (data.manager === "None") managerId = null;
+          else if (`${row.First_Name} ${row.Last_Name}` === data.manager)
+            managerId = row.id;
+          return managerId;
+        });
+        console.log("managerID", managerId);
         connection.query(
           "INSERT INTO employee SET ?",
           {
-            Fist_Name: data.firstName,
+            First_Name: data.firstName,
             Last_Name: data.lastName,
             role_id: roleID,
-            manager_id: 1,
+            manager_id: managerId,
           },
           (err, res) => {
             if (err) throw err;
