@@ -9,7 +9,8 @@ CONCAT(e.first_name, ' ' ,e.last_name) AS Manager
 FROM employee 
 INNER JOIN role ON role.id = employee.role_id 
 INNER JOIN department ON department.id = role.department_id 
-left join employee e ON employee.manager_id = e.id;`;
+left join employee e ON employee.manager_id = e.id
+ORDER BY employee.id`;
 const displayByManager = `SELECT CONCAT(manager.first_name, ' ', manager.last_name) AS Manager, department.name AS Department,  employee.First_Name, employee.Last_Name, role.Title
 FROM employee
 LEFT JOIN employee manager on manager.id = employee.manager_id
@@ -35,11 +36,11 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
   if (err) throw err;
   console.log(`connected as id ${connection.threadId}\n`);
-  startChoice();
+  startChoices();
 });
 
 //================== Inquirer Prompts ====================
-function startChoice() {
+function startChoices() {
   inquirer
     .prompt([
       {
@@ -95,7 +96,7 @@ function viewAll() {
   connection.query(displayAllEmp, (err, res) => {
     if (err) throw err;
     console.table(res);
-    startChoice();
+    startChoices();
   });
 }
 
@@ -104,7 +105,7 @@ function viewByDept() {
   connection.query(displayByDept, (err, res) => {
     if (err) throw err;
     console.table(res);
-    startChoice();
+    startChoices();
   });
 }
 
@@ -113,7 +114,7 @@ function viewByManager() {
   connection.query(displayByManager, (err, res) => {
     if (err) throw err;
     console.table(res);
-    startChoice();
+    s();
   });
 }
 
@@ -129,7 +130,6 @@ function addEmployee() {
       }, []);
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
     managerChoices.push("None");
-    console.log(managerChoices);
     inquirer
       .prompt([
         {
@@ -174,7 +174,7 @@ function addEmployee() {
             managerId = row.id;
           return managerId;
         });
-        console.log("managerID", managerId);
+
         connection.query(
           "INSERT INTO employee SET ?",
           {
@@ -185,7 +185,45 @@ function addEmployee() {
           },
           (err, res) => {
             if (err) throw err;
-            startChoice();
+            console.log(`${res.affectedRows} product inserted!\n`);
+            startChoices();
+          }
+        );
+      });
+  });
+}
+
+function removeEmployee() {
+  connection.query(displayAllEmp, async (err, res) => {
+    if (err) throw err;
+    let employeeChoices = res.map(
+      (res) => `${res.First_Name} ${res.Last_Name}`
+    );
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "deleteEmployee",
+          message: "Which Employee would you like to remove",
+          choices: employeeChoices,
+        },
+      ])
+      .then(function (data) {
+        let employeeId;
+        res.forEach((row) => {
+          if (`${row.First_Name} ${row.Last_Name}` === data.deleteEmployee)
+            return (employeeId = row.id);
+        });
+        connection.query(
+          "DELETE FROM employee WHERE ?",
+          {
+            id: employeeId,
+          },
+          (err, res) => {
+            if (err) throw err;
+            console.log(`${res.affectedRows} products deleted!\n`);
+            // Call readProducts AFTER the DELETE completes
+            startChoices();
           }
         );
       });
