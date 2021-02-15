@@ -3,6 +3,7 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
+const allFromEmployee = `Select * FROM employee`;
 const displayAllEmp = `SELECT employee.id, employee.First_Name, employee.Last_Name, role.Title, role.Salary, department.name AS department, 
 CONCAT(e.first_name, ' ' ,e.last_name) AS Manager 
 FROM employee 
@@ -49,10 +50,10 @@ function startChoice() {
           "View All Employees",
           "View Employees By Department",
           "View Employees By Manager",
-          "Add Department",
-          "Add Role",
           "Add Employee",
-          "Update Employee Info",
+          "Remove Employee",
+          "Update Employee Role",
+          "Update Employee Manager",
         ],
       },
     ])
@@ -70,20 +71,20 @@ function startChoice() {
           viewByDept();
           break;
 
-        case "Add Department":
-          addDepartment();
-          break;
-
-        case "Add Role":
-          addRole();
-          break;
-
         case "Add Employee":
           addEmployee();
           break;
 
-        case "Update Employee Info":
-          updateEmployee();
+        case "Remove Employee":
+          removeEmployee();
+          break;
+
+        case "Update Employee Role":
+          updateRole();
+          break;
+
+        case "Update Employee Manager":
+          updateManager();
           break;
       }
     });
@@ -113,5 +114,59 @@ function viewByManager() {
     if (err) throw err;
     console.table(res);
     startChoice();
+  });
+}
+
+function addEmployee() {
+  console.log("\n getting info ... \n");
+  connection.query(displayAllEmp, async (err, res) => {
+    if (err) throw err;
+    let roleChoices = res.map((res) => res.Title);
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          message: "What is the Employee's first name?",
+          name: "firstName",
+        },
+        {
+          type: "input",
+          message: "What is the Employee's last name?",
+          name: "lastName",
+        },
+        {
+          type: "input",
+          message: "What is the Employee's last name?",
+          name: "lastName",
+        },
+        {
+          type: "list",
+          message: "What is the Employee's Role?",
+          name: "role",
+          choices: roleChoices,
+        },
+      ])
+      .then(function (data) {
+        let firstName = data.firstName;
+        let lastName = data.lastName;
+        let roleID;
+        res.forEach((row) => {
+          if (row.Title === data.role) roleID = row.id;
+          return roleID;
+        });
+        connection.query(
+          "INSERT INTO employee SET ?",
+          {
+            Fist_Name: data.firstName,
+            Last_Name: data.lastName,
+            role_id: roleID,
+            manager_id: 1,
+          },
+          (err, res) => {
+            if (err) throw err;
+            startChoice();
+          }
+        );
+      });
   });
 }
