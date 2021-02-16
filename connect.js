@@ -38,6 +38,7 @@ FROM employee
 LEFT JOIN role ON role.id = employee.role_id
 LEFT JOIN department ON (department.id = role.department_id)
 ORDER BY department.name;`;
+const displayRole = `SELECT * FROM role`;
 
 //================= Set Up Database Connection =================
 const connection = mysql.createConnection({
@@ -57,7 +58,6 @@ connection.connect((err) => {
 
 //================== Inquirer Prompts ====================
 function startChoices() {
-  console.log(roleChoices[3], roleChoices[1]);
   inquirer
     .prompt([
       {
@@ -68,7 +68,9 @@ function startChoices() {
           "View All Employees",
           "View Employees By Department",
           "View Employees By Manager",
+          "View All Titles",
           "Add Employee",
+          "Add New Title",
           "Remove Employee",
           "Update Employee Role",
           "Update Employee Manager",
@@ -104,6 +106,14 @@ function startChoices() {
         case "Update Employee Manager":
           updateManager();
           break;
+
+        case "Add New Title":
+          addRole();
+          break;
+
+        case "View All Titles":
+          displayRoles();
+          break;
       }
     });
 }
@@ -138,11 +148,19 @@ function viewByManager() {
   });
 }
 
+function viewByManager() {
+  console.log("\n View All Titles... \n");
+  connection.query(displayRole, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    startChoices();
+  });
+}
+
 // add employee to the database
 function addEmployee() {
   console.log("\n getting info ... \n");
-  connection.query(displayAllEmp, async (err, res) => {
-    console.log(res);
+  connection.query(displayAllEmp, (err, res) => {
     if (err) throw err;
     // puts names of managers in an array
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
@@ -215,7 +233,7 @@ function addEmployee() {
 
 // removes selected employee
 function removeEmployee() {
-  connection.query(displayAllEmp, async (err, res) => {
+  connection.query(displayAllEmp, (err, res) => {
     if (err) throw err;
     let employeeChoices = res.map(
       (res) => `${res.First_Name} ${res.Last_Name}`
@@ -245,9 +263,7 @@ function removeEmployee() {
           (err, res) => {
             if (err) throw err;
             console.log("\n   \n");
-            console.log(
-              ` ${row.First_Name} ${row.Last_Name} has been deleted!\n`
-            );
+            console.log(` The Employee has been deleted!\n`);
             console.log(
               "your changes can be seen by selecting a table to view \n"
             );
@@ -262,7 +278,7 @@ function removeEmployee() {
 // update role of an employee
 function updateRole() {
   console.log("\n getting info ... \n");
-  connection.query(displayAllEmp, async (err, res) => {
+  connection.query(displayAllEmp, (err, res) => {
     //creates array of employee names from db
     let employeeChoices = res.map(
       (res) => `${res.First_Name} ${res.Last_Name}`
@@ -326,7 +342,7 @@ function updateRole() {
 // update manager prompts and query
 function updateManager() {
   console.log("\n getting info ... \n");
-  connection.query(displayAllEmp, async (err, res) => {
+  connection.query(displayAllEmp, (err, res) => {
     // makes array of employees
     let employeeChoices = res.map(
       (res) => `${res.First_Name} ${res.Last_Name}`
@@ -384,6 +400,48 @@ function updateManager() {
             console.log(
               "your changes can be seen by selecting a table to view \n"
             );
+            startChoices();
+          }
+        );
+      });
+  });
+}
+
+function addRole() {
+  console.log("\n getting info ... \n");
+  connection.query(displayRole, (err, res) => {
+    if (err) throw err;
+    // puts names of managers in an array
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          message: "What is the name of the new title?",
+          name: "newTitle",
+        },
+        {
+          type: "input",
+          message: "what is the salary of the new position?",
+          name: "newSalary",
+        },
+      ])
+      .then(function (data) {
+        let newSalary = Number(data.newSalary);
+        let newTitle = data.newTitle;
+        roleChoices.push(newTitle);
+        let departmentId = roleChoices.length + 1;
+
+        connection.query(
+          "INSERT INTO role SET ?",
+          {
+            Title: newTitle,
+            Salary: newSalary,
+            department_id: departmentId,
+          },
+          (err, res) => {
+            if (err) throw err;
+            console.log(`${res.affectedRows} product inserted!\n`);
             startChoices();
           }
         );

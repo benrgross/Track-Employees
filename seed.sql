@@ -6,12 +6,14 @@ CREATE DATABASE employeeDB;
 
 USE employeeDB;
 
+-- colum for department 
 CREATE TABLE department (
   id INT NOT NULL AUTO_INCREMENT,
   name VARCHAR(30) NOT NULL,
   PRIMARY KEY (id)
 );
 
+-- colum for role 
 CREATE TABLE role (
   id INT NOT NULL AUTO_INCREMENT,
   Title VARCHAR(30) NOT NULL,
@@ -22,6 +24,7 @@ CREATE TABLE role (
 
 );
 
+-- colum for employee
 CREATE TABLE employee (
   id INT NOT NULL AUTO_INCREMENT,
   First_Name VARCHAR(30) NOT NULL,
