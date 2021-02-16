@@ -41,7 +41,7 @@ const connection = mysql.createConnection({
 
   user: "root",
 
-  password: "chilmark",
+  password: "password",
   database: "employeeDB",
 });
 
@@ -53,6 +53,7 @@ connection.connect((err) => {
 
 //================== Inquirer Prompts ====================
 function startChoices() {
+  console.log(roleChoices[3], roleChoices[1]);
   inquirer
     .prompt([
       {
@@ -122,11 +123,11 @@ function viewByDept() {
 }
 
 function viewByManager() {
-  console.log("\n View By Departments... \n");
+  console.log("\n View ByManager... \n");
   connection.query(displayByManager, (err, res) => {
     if (err) throw err;
     console.table(res);
-    s();
+    startChoices();
   });
 }
 
