@@ -230,7 +230,13 @@ function removeEmployee() {
           },
           (err, res) => {
             if (err) throw err;
-            console.log(`${res.affectedRows} products deleted!\n`);
+            console.log("\n   \n");
+            console.log(
+              ` ${row.First_Name} ${row.Last_Name} has been deleted!\n`
+            );
+            console.log(
+              "your changes can be seen by selecting a table to view \n"
+            );
             // Call readProducts AFTER the DELETE completes
             startChoices();
           }
@@ -286,7 +292,13 @@ function updateRole() {
           ],
           (err, res) => {
             if (err) throw err;
-            console.log(`${res.affectedRows} products updated!\n`);
+            console.log("\n   \n");
+            console.log(
+              ` ${row.First_Name} ${row.Last_Name} has been updated!\n`
+            );
+            console.log(
+              "your changes can be seen by selecting a table to view \n"
+            );
             startChoices();
           }
         );
@@ -343,7 +355,13 @@ function updateManager() {
           ],
           (err, res) => {
             if (err) throw err;
-            console.log(`${res.affectedRows} products updated!\n`);
+            console.log("\n   \n");
+            console.log(
+              ` ${row.First_Name} ${row.Last_Name} has been deleted!\n`
+            );
+            console.log(
+              "your changes can be seen by selecting a table to view \n"
+            );
             startChoices();
           }
         );
