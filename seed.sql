@@ -1,3 +1,5 @@
+-- schema for database --
+
 DROP DATABASE IF EXISTS employeeDB;
 
 CREATE DATABASE employeeDB;
@@ -31,7 +33,7 @@ CREATE TABLE employee (
   PRIMARY KEY (id)
 );
 
-
+-- seeds for inital db info 
 INSERT INTO department (name)
 VALUES 
 ('Sales'),
@@ -68,6 +70,7 @@ VALUES
 ('Decklin', "Holiday", 10, 8);
 
 
+-- selections for tables 
 Select * From department;
 
 Select * From role;
