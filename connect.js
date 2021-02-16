@@ -3,7 +3,19 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
-const allFromEmployee = `Select * FROM employee`;
+const roleChoices = [
+  "Sales Lead",
+  "Sales Person",
+  "Lead Engineer",
+  "Software Engineer",
+  "Junior Engineer",
+  "Account Manager",
+  "Accountant",
+  "Legal Team Lead",
+  "Lawyer",
+  "Paralegal",
+];
+
 const displayAllEmp = `SELECT employee.id, employee.First_Name, employee.Last_Name, role.Title, role.Salary, department.name AS department, 
 CONCAT(e.first_name, ' ' ,e.last_name) AS Manager 
 FROM employee 
@@ -121,13 +133,8 @@ function viewByManager() {
 function addEmployee() {
   console.log("\n getting info ... \n");
   connection.query(displayAllEmp, async (err, res) => {
+    console.log(res);
     if (err) throw err;
-    let roleChoices = res
-      .map((res) => res.Title)
-      .reduce(function (a, b) {
-        if (a.indexOf(b) < 0) a.push(b);
-        return a;
-      }, []);
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
     managerChoices.push("None");
     inquirer
@@ -150,7 +157,7 @@ function addEmployee() {
         {
           type: "list",
           message: "What is the Employee's Role?",
-          name: "role",
+          name: "title",
           choices: roleChoices,
         },
         {
@@ -162,10 +169,11 @@ function addEmployee() {
       ])
       .then(function (data) {
         let roleID;
-        res.forEach((row) => {
-          if (row.Title === data.role) roleID = row.id;
-          return roleID;
+        roleChoices.forEach((role) => {
+          if (role === data.title)
+            return (roleID = roleChoices.indexOf(role) + 1);
         });
+        console.log(roleID);
 
         let managerId;
         res.forEach((row) => {
@@ -223,6 +231,118 @@ function removeEmployee() {
             if (err) throw err;
             console.log(`${res.affectedRows} products deleted!\n`);
             // Call readProducts AFTER the DELETE completes
+            startChoices();
+          }
+        );
+      });
+  });
+}
+
+function updateRole() {
+  console.log("\n getting info ... \n");
+  connection.query(displayAllEmp, async (err, res) => {
+    let employeeChoices = res.map(
+      (res) => `${res.First_Name} ${res.Last_Name}`
+    );
+
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "employee",
+          message: "Which Employee would you like to update?",
+          choices: employeeChoices,
+        },
+        {
+          type: "list",
+          name: "title",
+          message: "What title would you like to assign this employee?",
+          choices: roleChoices,
+        },
+      ])
+      .then(function (data) {
+        let roleID;
+        roleChoices.forEach((role) => {
+          if (role === data.title)
+            return (roleID = roleChoices.indexOf(role) + 1);
+        });
+
+        let employeeId;
+        res.forEach((row) => {
+          if (`${row.First_Name} ${row.Last_Name}` === data.employee)
+            return (employeeId = row.id);
+        });
+
+        const query = connection.query(
+          "UPDATE employee SET ? WHERE ?",
+          [
+            {
+              role_id: roleID,
+            },
+            {
+              id: employeeId,
+            },
+          ],
+          (err, res) => {
+            if (err) throw err;
+            console.log(`${res.affectedRows} products updated!\n`);
+            startChoices();
+          }
+        );
+      });
+  });
+}
+
+function updateManager() {
+  console.log("\n getting info ... \n");
+  connection.query(displayAllEmp, async (err, res) => {
+    let employeeChoices = res.map(
+      (res) => `${res.First_Name} ${res.Last_Name}`
+    );
+    let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
+    managerChoices.push("None");
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "employee",
+          message: "Which Employee would you like to update?",
+          choices: employeeChoices,
+        },
+        {
+          type: "list",
+          name: "manager",
+          message: "Who would you like to assign as their manager",
+          choices: managerChoices,
+        },
+      ])
+      .then(function (data) {
+        let employeeId;
+        res.forEach((row) => {
+          if (`${row.First_Name} ${row.Last_Name}` === data.employee)
+            return (employeeId = row.id);
+        });
+        let managerId;
+        res.forEach((row) => {
+          if (data.manager === "None") managerId = null;
+          else if (`${row.First_Name} ${row.Last_Name}` === data.manager)
+            managerId = row.id;
+          return managerId;
+        });
+
+        const query = connection.query(
+          "UPDATE employee SET ? WHERE ?",
+          [
+            {
+              manager_id: managerId,
+            },
+            {
+              id: employeeId,
+            },
+          ],
+          (err, res) => {
+            if (err) throw err;
+            console.log(`${res.affectedRows} products updated!\n`);
             startChoices();
           }
         );
