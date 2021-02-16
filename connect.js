@@ -3,6 +3,7 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
+// array for roles/ titles
 const roleChoices = [
   "Sales Lead",
   "Sales Person",
@@ -16,6 +17,7 @@ const roleChoices = [
   "Paralegal",
 ];
 
+// Selection for all employees with id, first name, last name, title, salary, department, and manager
 const displayAllEmp = `SELECT employee.id, employee.First_Name, employee.Last_Name, role.Title, role.Salary, department.name AS department, 
 CONCAT(e.first_name, ' ' ,e.last_name) AS Manager 
 FROM employee 
@@ -23,12 +25,14 @@ INNER JOIN role ON role.id = employee.role_id
 INNER JOIN department ON department.id = role.department_id 
 left join employee e ON employee.manager_id = e.id
 ORDER BY employee.id`;
+// display employees by their managers
 const displayByManager = `SELECT CONCAT(manager.first_name, ' ', manager.last_name) AS Manager, department.name AS Department,  employee.First_Name, employee.Last_Name, role.Title
 FROM employee
 LEFT JOIN employee manager on manager.id = employee.manager_id
 INNER JOIN role ON (role.id = employee.role_id && employee.manager_id != 'NULL')
 INNER JOIN department ON (department.id = role.department_id)
 ORDER BY manager;`;
+// display employees by department.
 const displayByDept = `SELECT department.name AS Department, role.Title, employee.First_Name, employee.Last_Name
 FROM employee
 LEFT JOIN role ON role.id = employee.role_id
@@ -104,6 +108,7 @@ function startChoices() {
     });
 }
 
+// displays table by employee with first name, last name, title, department, salary and manager
 function viewAll() {
   console.log("\n View All Employee Info... \n");
   connection.query(displayAllEmp, (err, res) => {
@@ -113,6 +118,7 @@ function viewAll() {
   });
 }
 
+// displays data by department with employees names and postilions
 function viewByDept() {
   console.log("\n View By Departments... \n");
   connection.query(displayByDept, (err, res) => {
@@ -122,6 +128,7 @@ function viewByDept() {
   });
 }
 
+// view employees by their manager
 function viewByManager() {
   console.log("\n View ByManager... \n");
   connection.query(displayByManager, (err, res) => {
@@ -131,11 +138,13 @@ function viewByManager() {
   });
 }
 
+// add employee to the database
 function addEmployee() {
   console.log("\n getting info ... \n");
   connection.query(displayAllEmp, async (err, res) => {
     console.log(res);
     if (err) throw err;
+    // puts names of managers in an array
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
     managerChoices.push("None");
     inquirer
@@ -169,13 +178,14 @@ function addEmployee() {
         },
       ])
       .then(function (data) {
+        // function to define role id to match the selected title
         let roleID;
         roleChoices.forEach((role) => {
           if (role === data.title)
             return (roleID = roleChoices.indexOf(role) + 1);
         });
-        console.log(roleID);
 
+        // function to match selected manager with their db id
         let managerId;
         res.forEach((row) => {
           if (data.manager === "None") managerId = null;
@@ -184,6 +194,7 @@ function addEmployee() {
           return managerId;
         });
 
+        // insert employee into employee column in data base
         connection.query(
           "INSERT INTO employee SET ?",
           {
@@ -202,6 +213,7 @@ function addEmployee() {
   });
 }
 
+// removes selected employee
 function removeEmployee() {
   connection.query(displayAllEmp, async (err, res) => {
     if (err) throw err;
@@ -217,12 +229,14 @@ function removeEmployee() {
           choices: employeeChoices,
         },
       ])
+      // matches choice with employee id in db
       .then(function (data) {
         let employeeId;
         res.forEach((row) => {
           if (`${row.First_Name} ${row.Last_Name}` === data.deleteEmployee)
             return (employeeId = row.id);
         });
+        // delete query
         connection.query(
           "DELETE FROM employee WHERE ?",
           {
@@ -245,9 +259,11 @@ function removeEmployee() {
   });
 }
 
+// update role of an employee
 function updateRole() {
   console.log("\n getting info ... \n");
   connection.query(displayAllEmp, async (err, res) => {
+    //creates array of employee names from db
     let employeeChoices = res.map(
       (res) => `${res.First_Name} ${res.Last_Name}`
     );
@@ -268,18 +284,19 @@ function updateRole() {
         },
       ])
       .then(function (data) {
+        // matches role to role id in db
         let roleID;
         roleChoices.forEach((role) => {
           if (role === data.title)
             return (roleID = roleChoices.indexOf(role) + 1);
         });
-
+        // matches employee to employee id in db
         let employeeId;
         res.forEach((row) => {
           if (`${row.First_Name} ${row.Last_Name}` === data.employee)
             return (employeeId = row.id);
         });
-
+        // update query for role id
         const query = connection.query(
           "UPDATE employee SET ? WHERE ?",
           [
@@ -306,12 +323,15 @@ function updateRole() {
   });
 }
 
+// update manager prompts and query
 function updateManager() {
   console.log("\n getting info ... \n");
   connection.query(displayAllEmp, async (err, res) => {
+    // makes array of employees
     let employeeChoices = res.map(
       (res) => `${res.First_Name} ${res.Last_Name}`
     );
+    // makes an array of managers
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
     managerChoices.push("None");
     inquirer
@@ -330,11 +350,13 @@ function updateManager() {
         },
       ])
       .then(function (data) {
+        // matches selection to employee id in database
         let employeeId;
         res.forEach((row) => {
           if (`${row.First_Name} ${row.Last_Name}` === data.employee)
             return (employeeId = row.id);
         });
+        // matches selection to manager id in database
         let managerId;
         res.forEach((row) => {
           if (data.manager === "None") managerId = null;
@@ -342,7 +364,7 @@ function updateManager() {
             managerId = row.id;
           return managerId;
         });
-
+        // update query for manager id
         const query = connection.query(
           "UPDATE employee SET ? WHERE ?",
           [
