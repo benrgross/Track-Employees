@@ -2,6 +2,7 @@
 
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+var figlet = require("figlet");
 
 // Selection for all employees with id, first name, last name, title, salary, department, and manager
 const displayAllEmp = `SELECT employee.id, employee.First_Name, employee.Last_Name, role.Title, role.Salary, department.name AS department, CONCAT(e.first_name, ' ' ,e.last_name) AS Manager FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id left join employee e ON employee.manager_id = e.id ORDER BY employee.id`;
@@ -19,8 +20,8 @@ LEFT JOIN role ON role.id = employee.role_id
 LEFT JOIN department ON (department.id = role.department_id)
 ORDER BY department.name;`;
 const displayRole = `SELECT * FROM role`;
-
 const displayEmpByRole = `  SELECT role.Title, role.id, employee.First_Name, employee.Last_Name FROM role left join employee on role.id = employee.role_id;`;
+const displayUtilBudget = `SELECT department.id, department.name,  SUM(salary) FROM  role INNER JOIN department ON (department.id = role.department_id) GROUP BY  department_id;`;
 //================= Set Up Database Connection =================
 const connection = mysql.createConnection({
   port: 3306,
@@ -34,13 +35,24 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
   if (err) throw err;
   console.log(`connected as id ${connection.threadId}\n`);
-  startChoices();
+  welcome();
 });
 
 //================== Inquirer Prompts ====================
-function startChoices() {
-  console.log("");
 
+const welcome = () => {
+  figlet("Welcome to Employee Tracker!!!", function (err, data) {
+    if (err) {
+      console.log("Something went wrong...");
+      console.dir(err);
+      return;
+    }
+    console.log(data);
+    startChoices();
+  });
+};
+
+function startChoices() {
   inquirer
     .prompt([
       {
@@ -52,12 +64,14 @@ function startChoices() {
           "View Employees By Department",
           "View Employees By Manager",
           "View All Roles",
+          "View Total Utilized Budgets of Departments",
           "Add Employee",
           "Add New Title",
           "Remove Employee",
           "Remove Title",
           "Update Employee Role",
           "Update Employee Manager",
+          "Exit Application",
         ],
       },
     ])
@@ -102,6 +116,12 @@ function startChoices() {
         case "Remove Title":
           removeRole();
           break;
+        case "View Total Utilized Budgets of Departments":
+          viewUtilBudget();
+          break;
+        case "Exit Application":
+          exitApp();
+          break;
       }
     });
 }
@@ -139,6 +159,15 @@ function viewByManager() {
 function displayRoles() {
   console.log("\n View All Titles... \n");
   connection.query(displayRole, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    startChoices();
+  });
+}
+
+function viewUtilBudget() {
+  console.log("\n View Utilized Bidget By Department... \n");
+  connection.query(displayUtilBudget, (err, res) => {
     if (err) throw err;
     console.table(res);
     startChoices();
@@ -475,3 +504,8 @@ function removeRole() {
       });
   });
 }
+
+const exitApp = () => {
+  console.log("\n Exiting Application \n");
+  connection.end();
+};
