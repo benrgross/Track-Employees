@@ -113,3 +113,9 @@ LEFT JOIN department on department.id = role.department_id;
 --  display employee  name by role 
  SELECT role.Title, role.id, employee.First_Name, employee.Last_Name 
  FROM role left join employee on role.id = employee.role_id;
+
+-- View the total utilized budgets of departments
+SELECT department.id, department.name,  SUM(salary) 
+FROM  role
+INNER JOIN department ON (department.id = role.department_id)
+GROUP BY  department_id;
