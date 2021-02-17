@@ -14,7 +14,7 @@ The Employee Tracker is a CLI application that runs in the node terminal. This a
 
 ## Installation
 
-To install clone the repository locally, open the file in the desired code editor, run "npm i" in the terminal and subsequently "start." Follow the prompts.
+To install clone the repository locally, open the file in the desired code editor. Create the data base by copying the schema and dropping it in the MySQL workbench. Run "npm i" in the terminal and subsequently "start." Follow the prompts.
 
 ## Usage
 
