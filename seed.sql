@@ -18,7 +18,7 @@ CREATE TABLE role (
   id INT NOT NULL AUTO_INCREMENT,
   Title VARCHAR(30) NOT NULL,
   Salary DECIMAL NOT NULL,
-  department_id integer,
+  department_id Integer NOT NULL,
   CONSTRAINT fk_deptartment_id FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE CASCADE,
   PRIMARY KEY (id)
 
@@ -49,7 +49,7 @@ INSERT INTO role(title, salary, department_id)
 VALUES 
 ('Sales Lead', 120000, 1),
 ('Sales Person', 750000, 1),
-('Lead Engineer', 175000, 2),
+('Lead Engineer', 175000, 2)
 ('Software Engineer', 1200000, 2),
 ('Junior Engineer', 75000, 2),
 ('Account Manager', 150000, 3),

@@ -3,28 +3,8 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
-// array for roles/ titles
-const roleChoices = [
-  "Sales Lead",
-  "Sales Person",
-  "Lead Engineer",
-  "Software Engineer",
-  "Junior Engineer",
-  "Account Manager",
-  "Accountant",
-  "Legal Team Lead",
-  "Lawyer",
-  "Paralegal",
-];
-
 // Selection for all employees with id, first name, last name, title, salary, department, and manager
-const displayAllEmp = `SELECT employee.id, employee.First_Name, employee.Last_Name, role.Title, role.Salary, department.name AS department, 
-CONCAT(e.first_name, ' ' ,e.last_name) AS Manager 
-FROM employee 
-INNER JOIN role ON role.id = employee.role_id 
-INNER JOIN department ON department.id = role.department_id 
-left join employee e ON employee.manager_id = e.id
-ORDER BY employee.id`;
+const displayAllEmp = `SELECT employee.id, employee.First_Name, employee.Last_Name, role.Title, role.Salary, department.name AS department, CONCAT(e.first_name, ' ' ,e.last_name) AS Manager FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id left join employee e ON employee.manager_id = e.id ORDER BY employee.id`;
 // display employees by their managers
 const displayByManager = `SELECT CONCAT(manager.first_name, ' ', manager.last_name) AS Manager, department.name AS Department,  employee.First_Name, employee.Last_Name, role.Title
 FROM employee
@@ -40,6 +20,7 @@ LEFT JOIN department ON (department.id = role.department_id)
 ORDER BY department.name;`;
 const displayRole = `SELECT * FROM role`;
 
+const displayEmpByRole = `  SELECT role.Title, role.id, employee.First_Name, employee.Last_Name FROM role left join employee on role.id = employee.role_id;`;
 //================= Set Up Database Connection =================
 const connection = mysql.createConnection({
   port: 3306,
@@ -58,6 +39,8 @@ connection.connect((err) => {
 
 //================== Inquirer Prompts ====================
 function startChoices() {
+  console.log("");
+
   inquirer
     .prompt([
       {
@@ -68,10 +51,11 @@ function startChoices() {
           "View All Employees",
           "View Employees By Department",
           "View Employees By Manager",
-          "View All Titles",
+          "View All Roles",
           "Add Employee",
           "Add New Title",
           "Remove Employee",
+          "Remove Title",
           "Update Employee Role",
           "Update Employee Manager",
         ],
@@ -111,8 +95,12 @@ function startChoices() {
           addRole();
           break;
 
-        case "View All Titles":
+        case "View All Roles":
           displayRoles();
+          break;
+
+        case "Remove Title":
+          removeRole();
           break;
       }
     });
@@ -148,7 +136,7 @@ function viewByManager() {
   });
 }
 
-function viewByManager() {
+function displayRoles() {
   console.log("\n View All Titles... \n");
   connection.query(displayRole, (err, res) => {
     if (err) throw err;
@@ -160,11 +148,21 @@ function viewByManager() {
 // add employee to the database
 function addEmployee() {
   console.log("\n getting info ... \n");
-  connection.query(displayAllEmp, (err, res) => {
+  connection.query(displayEmpByRole, (err, res) => {
     if (err) throw err;
     // puts names of managers in an array
+    console.log(res);
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
     managerChoices.push("None");
+    console.log(managerChoices);
+    let roleChoices = res
+      .map((res) => res.Title)
+      .reduce(function (a, b) {
+        if (a.indexOf(b) < 0) a.push(b);
+        return a;
+      }, []);
+
+    console.log(roleChoices);
     inquirer
       .prompt([
         {
@@ -198,9 +196,9 @@ function addEmployee() {
       .then(function (data) {
         // function to define role id to match the selected title
         let roleID;
-        roleChoices.forEach((role) => {
-          if (role === data.title)
-            return (roleID = roleChoices.indexOf(role) + 1);
+        console.log(res);
+        res.forEach((row) => {
+          if (row.Title === data.title) return (roleID = row.id);
         });
 
         // function to match selected manager with their db id
@@ -208,10 +206,9 @@ function addEmployee() {
         res.forEach((row) => {
           if (data.manager === "None") managerId = null;
           else if (`${row.First_Name} ${row.Last_Name}` === data.manager)
-            managerId = row.id;
-          return managerId;
+            return (managerId = row.id);
         });
-
+        console.log("managerID", managerId);
         // insert employee into employee column in data base
         connection.query(
           "INSERT INTO employee SET ?",
@@ -219,6 +216,7 @@ function addEmployee() {
             First_Name: data.firstName,
             Last_Name: data.lastName,
             role_id: roleID,
+
             manager_id: managerId,
           },
           (err, res) => {
@@ -278,8 +276,14 @@ function removeEmployee() {
 // update role of an employee
 function updateRole() {
   console.log("\n getting info ... \n");
-  connection.query(displayAllEmp, (err, res) => {
+  connection.query(displayEmpByRole, (err, res) => {
     //creates array of employee names from db
+    let roleChoices = res
+      .map((res) => res.Title)
+      .reduce(function (a, b) {
+        if (a.indexOf(b) < 0) a.push(b);
+        return a;
+      }, []);
     let employeeChoices = res.map(
       (res) => `${res.First_Name} ${res.Last_Name}`
     );
@@ -302,9 +306,9 @@ function updateRole() {
       .then(function (data) {
         // matches role to role id in db
         let roleID;
-        roleChoices.forEach((role) => {
-          if (role === data.title)
-            return (roleID = roleChoices.indexOf(role) + 1);
+        console.log(res);
+        res.forEach((row) => {
+          if (row.Title === data.title) return (roleID = row.id);
         });
         // matches employee to employee id in db
         let employeeId;
@@ -326,9 +330,7 @@ function updateRole() {
           (err, res) => {
             if (err) throw err;
             console.log("\n   \n");
-            console.log(
-              ` ${row.First_Name} ${row.Last_Name} has been updated!\n`
-            );
+            console.log(` employee has been updated has been updated!\n`);
             console.log(
               "your changes can be seen by selecting a table to view \n"
             );
@@ -394,9 +396,7 @@ function updateManager() {
           (err, res) => {
             if (err) throw err;
             console.log("\n   \n");
-            console.log(
-              ` ${row.First_Name} ${row.Last_Name} has been deleted!\n`
-            );
+            console.log(` Employee has been updated\n`);
             console.log(
               "your changes can be seen by selecting a table to view \n"
             );
@@ -409,10 +409,9 @@ function updateManager() {
 
 function addRole() {
   console.log("\n getting info ... \n");
-  connection.query(displayRole, (err, res) => {
+  connection.query(`SELECT * FROM department`, (err, res) => {
     if (err) throw err;
-    // puts names of managers in an array
-
+    departmentChoices = res.map((results) => results.name);
     inquirer
       .prompt([
         {
@@ -425,23 +424,51 @@ function addRole() {
           message: "what is the salary of the new position?",
           name: "newSalary",
         },
+        {
+          type: "list",
+          name: "department",
+          message: "please select the department to add new title to",
+          choices: departmentChoices,
+        },
       ])
       .then(function (data) {
-        let newSalary = Number(data.newSalary);
-        let newTitle = data.newTitle;
-        roleChoices.push(newTitle);
-        let departmentId = roleChoices.length + 1;
-
         connection.query(
-          "INSERT INTO role SET ?",
+          `INSERT INTO role(Title, Salary, department_id) VALUES ("${data.newTitle}", "${data.newSalary}", 
+          (SELECT id FROM department WHERE name = "${data.department}"));`
+        );
+        startChoices();
+      });
+  });
+}
+
+function removeRole() {
+  connection.query(displayRole, (err, res) => {
+    if (err) throw err;
+    let titleChoices = res.map((res) => res.Title);
+    console.log(titleChoices);
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "deleteRole",
+          message: "choose the title you would like to delete?",
+          choices: titleChoices,
+        },
+      ])
+      .then(function (data) {
+        connection.query(
+          "DELETE FROM role WHERE ?",
           {
-            Title: newTitle,
-            Salary: newSalary,
-            department_id: departmentId,
+            Title: data.deleteRole,
           },
           (err, res) => {
             if (err) throw err;
-            console.log(`${res.affectedRows} product inserted!\n`);
+            console.log("\n   \n");
+            console.log(` The Role has been deleted!\n`);
+            console.log(
+              "your changes can be seen by selecting a table to view \n"
+            );
+            // Call readProducts AFTER the DELETE completes
             startChoices();
           }
         );

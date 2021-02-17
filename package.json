@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node connect.js",
-    "watch": "nodemon"
+    "watch": "nodemon connect.js"
   },
   "repository": {
     "type": "git",
@@ -20,5 +20,6 @@
   "homepage": "https://github.com/benrgross/Track-Employees#readme",
   "dependencies": {
     "mysql": "^2.18.1"
-  }
+  },
+  "devDependencies": {}
 }
