@@ -180,10 +180,9 @@ function addEmployee() {
   connection.query(displayEmpByRole, (err, res) => {
     if (err) throw err;
     // puts names of managers in an array
-    console.log(res);
     let managerChoices = res.map((res) => `${res.First_Name} ${res.Last_Name}`);
     managerChoices.push("None");
-    console.log(managerChoices);
+    // filters role choices so there are no doubles
     let roleChoices = res
       .map((res) => res.Title)
       .reduce(function (a, b) {
@@ -191,7 +190,6 @@ function addEmployee() {
         return a;
       }, []);
 
-    console.log(roleChoices);
     inquirer
       .prompt([
         {
@@ -225,7 +223,6 @@ function addEmployee() {
       .then(function (data) {
         // function to define role id to match the selected title
         let roleID;
-        console.log(res);
         res.forEach((row) => {
           if (row.Title === data.title) return (roleID = row.id);
         });
@@ -237,7 +234,7 @@ function addEmployee() {
           else if (`${row.First_Name} ${row.Last_Name}` === data.manager)
             return (managerId = row.id);
         });
-        console.log("managerID", managerId);
+
         // insert employee into employee column in data base
         connection.query(
           "INSERT INTO employee SET ?",
@@ -335,7 +332,6 @@ function updateRole() {
       .then(function (data) {
         // matches role to role id in db
         let roleID;
-        console.log(res);
         res.forEach((row) => {
           if (row.Title === data.title) return (roleID = row.id);
         });
@@ -474,7 +470,6 @@ function removeRole() {
   connection.query(displayRole, (err, res) => {
     if (err) throw err;
     let titleChoices = res.map((res) => res.Title);
-    console.log(titleChoices);
     inquirer
       .prompt([
         {
