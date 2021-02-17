@@ -21,7 +21,7 @@ LEFT JOIN department ON (department.id = role.department_id)
 ORDER BY department.name;`;
 const displayRole = `SELECT * FROM role`;
 const displayEmpByRole = `  SELECT role.Title, role.id, employee.First_Name, employee.Last_Name FROM role left join employee on role.id = employee.role_id;`;
-const displayUtilBudget = `SELECT department.id, department.name,  SUM(salary) FROM  role INNER JOIN department ON (department.id = role.department_id) GROUP BY  department_id;`;
+const displayUtilBudget = `SELECT department.id, department.name AS Department,  SUM(salary) AS Utilized_Budget FROM  role INNER JOIN department ON (department.id = role.department_id) GROUP BY  department_id;`;
 //================= Set Up Database Connection =================
 const connection = mysql.createConnection({
   port: 3306,
